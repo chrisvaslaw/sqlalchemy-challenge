@@ -1,11 +1,9 @@
 import numpy as np
-import pandas as pd
 import datetime as dt
 
-import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, func, inspect, select, join, text
+from sqlalchemy import create_engine, func
 
 from flask import Flask, jsonify
 
@@ -55,7 +53,7 @@ def welcome():
         f"<br/>"
         f"/api/v1.0/start/end<br/>"
         f"- When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive<br/>"
-          )
+          ) 
 #########################################################################################
 
 # Build Routes-- Route 1
@@ -67,10 +65,10 @@ def precipitation():
     """Return a list of prior year rain totals from all stations"""
 
 # Calculate the date one year from the last date in data set.
-    one_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
+    one_year = dt.date(2017, 8, 23) - dt.timedelta(days=365) 
 
 # Perform a query to retrieve the data and precipitation scores
-precipitation_data = session.query(Measurement.date, Measurement.prcp).\
+    precipitation_data = session.query(Measurement.date, Measurement.prcp).\
                                    filter(Measurement.date > one_year).\
                                    order_by(Measurement.date).all()
     session.close()
@@ -79,8 +77,8 @@ precipitation_data = session.query(Measurement.date, Measurement.prcp).\
     data = []
     for date, prcp in precipitation_data:
         precipitation_dict = {}
-        precipitation_dict['Date'] = date[0]
-        preciptiation_dict['Prcp'] = prcp[1]
+        precipitation_dict['Date'] = date
+        precipitation_dict['Prcp'] = prcp
         data.append(precipitation_dict)
 
 # Return the JSON representation of your dictionary.
@@ -89,16 +87,14 @@ precipitation_data = session.query(Measurement.date, Measurement.prcp).\
 # Build Routes-- Route 2
 @app.route("/api/v1.0/stations")
 def stations():
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
+    
     """Return a JSON list of stations from the dataset."""
 
 # Build a query to list all stations by name
-all_stations = engine.execute('SELECT DISTINCT name FROM Station').fetchall()
+    all_stations = engine.execute('SELECT DISTINCT name FROM Station').fetchall()
 
 # Convert list of tuples into normal list
-all_station_list = list(np.ravel(all_stations))
+    all_station_list = list(np.ravel(all_stations))
 
 # Return the JSON representation of your dictionary.
     return jsonify(all_station_list)
@@ -115,16 +111,17 @@ def tobs():
     one_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
 
 # Perform a query to retrieve the temperature observations (TOBS) for the previous year
-temp_obv = session.query(Measurement.date, Measurement.tobs).\
+    temp_obv = session.query(Measurement.date, Measurement.tobs).\
      filter(Measurement.date > one_year). \
-            order_by(Measurements.date).all()
-            session.close()
+            order_by(Measurement.date).all()
+            
+    session.close()
 
 # Return the JSON representation of your list
     return jsonify(temp_obv)
 
 # Build Routes-- Route 4
-@app.route("/api/v1.0/start")
+@app.route("/api/v1.0/<start>")
 def start(start):
     # Create our session (link) from Python to the DB
     session = Session(engine)
@@ -135,20 +132,21 @@ def start(start):
     one_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
 
 # Calculate the minimum temperature, the average temperature, and the max temperature for the start date
-temp_max_start = session.query(func.max(Measurement.tobs)).filter((Measurement.date > one_year))
-temp_min_start = session.query(func.min(Measurement.tobs)).filter((Measurement.date > one_year))
-temp_avg_start = session.query(func.avg(Measurement.tobs)).filter((Measurement.date > one_year))
+    temp_max_start = session.query(func.max(Measurement.tobs)).filter((Measurement.date > one_year))
+    temp_min_start = session.query(func.min(Measurement.tobs)).filter((Measurement.date > one_year))
+    temp_avg_start = session.query(func.avg(Measurement.tobs)).filter((Measurement.date > one_year))
 
-stats_data_start = [temp_max_start.all(), temp_min_start.all(), temp_avg_start.all()]
-session.close()
+    stats_data_start = [temp_max_start.all(), temp_min_start.all(), temp_avg_start.all()]
 
-stats_list_start = list(np.ravel(stats_data_start))
+    session.close()
+    
+    stats_list_start = list(np.ravel(stats_data_start))
 
 # Return the JSON representation of your list
-    return jsonify(stats_list)
+    return jsonify(stats_list_start)
 
 # Build Routes-- Route 5
-@app.route("/api/v1.0/start/end")
+@app.route("/api/v1.0/<start>/<end>")
 def end(start, end):
     # Create our session (link) from Python to the DB
     session = Session(engine)
@@ -159,14 +157,15 @@ def end(start, end):
     one_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
 
 # Calculate the minimum temperature, the average temperature, and the max temperature for the start date
-temp_max_end = session.query(func.max(Measurement.tobs)).filter((Measurement.date <= one_year))
-temp_min_end = session.query(func.min(Measurement.tobs)).filter((Measurement.date <= one_year))
-temp_avg_end = session.query(func.avg(Measurement.tobs)).filter((Measurement.date <= one_year))
+    temp_max_end = session.query(func.max(Measurement.tobs)).filter((Measurement.date <= one_year))
+    temp_min_end = session.query(func.min(Measurement.tobs)).filter((Measurement.date <= one_year))
+    temp_avg_end = session.query(func.avg(Measurement.tobs)).filter((Measurement.date <= one_year))
 
-stats_data_end = [temp_max_end.all(), temp_min_end.all(), temp_avg_end.all()]
-session.close()
+    stats_data_end = [temp_max_end.all(), temp_min_end.all(), temp_avg_end.all()]
 
-stats_list_end = list(np.ravel(stats_data_end))
+    session.close()
+     
+    stats_list_end = list(np.ravel(stats_data_end))
 
 # Return the JSON representation of your list
     return jsonify(stats_list_end)
